@@ -1,0 +1,1 @@
+FROM python:3.12-slim\nWORKDIR /app\nCOPY . .\nCMD ["python","-c","from ai_eval import RegressionGate; print('evaluation ready')"]\n
