@@ -1,21 +1,55 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from opentelemetry import trace
-from evaluation_domain import *
-try:
- from opentelemetry.sdk.resources import Resource
- from opentelemetry.sdk.trace import TracerProvider
- from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
- p=TracerProvider(resource=Resource.create({"service.name":"ai-evaluation-framework"}));p.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()));trace.set_tracer_provider(p)
-except Exception: pass
-app=FastAPI(title="ai-evaluation-framework",version="1.0.0");tracer=trace.get_tracer("ai-evaluation-framework")
-class Request(BaseModel): key:str; payload:dict={}
+from pydantic import BaseModel, Field
+
+from evaluation_domain import Case, exact_match
+from observability import configure_observability, get_logger
+
+configure_observability()
+logger = get_logger(__name__)
+tracer = trace.get_tracer("ai-evaluation-framework")
+app = FastAPI(title="ai-evaluation-framework", version="1.0.0")
+
+
+class Request(BaseModel):
+    key: str
+    payload: dict = Field(default_factory=dict)
+
+
 @app.get("/health/live")
-def live(): return {"status":"ok"}
+def live() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 @app.get("/health/ready")
-def ready(): return {"status":"ready"}
+def ready() -> dict[str, str]:
+    return {"status": "ready"}
+
+
 @app.post("/v1/evaluate")
-def handle(r:Request):
- with tracer.start_as_current_span("ai-evaluation-framework.domain"):
-  try: cases=[Case(str(i),str(x.get("expected","")),str(x.get("actual",""))) for i,x in enumerate(r.payload.get("cases",[]))];s=exact_match(cases);return {"total":s.total,"passed":s.passed,"score":s.score}
-  except (ValueError,KeyError,RuntimeError) as e: raise HTTPException(status_code=400,detail=str(e)) from e
+def handle(request: Request) -> dict[str, float | int]:
+    with tracer.start_as_current_span("evaluation.evaluate") as span:
+        span.set_attribute("evaluation.key", request.key)
+        try:
+            raw_cases = request.payload.get("cases", [])
+            if not isinstance(raw_cases, list):
+                raise ValueError("cases must be a list")
+            cases = [
+                Case(
+                    id=str(index),
+                    expected=str(item.get("expected", "")),
+                    actual=str(item.get("actual", "")),
+                )
+                for index, item in enumerate(raw_cases)
+                if isinstance(item, dict)
+            ]
+            scorecard = exact_match(cases)
+            logger.info("evaluation completed key=%s total=%s score=%s", request.key, scorecard.total, scorecard.score)
+            return {
+                "total": scorecard.total,
+                "passed": scorecard.passed,
+                "score": scorecard.score,
+            }
+        except (ValueError, KeyError, TypeError) as exc:
+            logger.warning("evaluation rejected key=%s reason=%s", request.key, exc)
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
