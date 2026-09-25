@@ -44,7 +44,12 @@ def handle(request: Request) -> dict[str, float | int]:
                 if isinstance(item, dict)
             ]
             scorecard = exact_match(cases)
-            logger.info("evaluation completed key=%s total=%s score=%s", request.key, scorecard.total, scorecard.score)
+            logger.info(
+                "evaluation completed key=%s total=%s score=%s",
+                request.key,
+                scorecard.total,
+                scorecard.score,
+            )
             return {
                 "total": scorecard.total,
                 "passed": scorecard.passed,
