@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException
+import time
+import uuid
+
+from fastapi import FastAPI, HTTPException, Request as FastAPIRequest
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 
@@ -14,6 +17,18 @@ app = FastAPI(title="ai-evaluation-framework", version="1.0.0")
 class Request(BaseModel):
     key: str
     payload: dict = Field(default_factory=dict)
+
+
+@app.middleware("http")
+async def observability_headers(request: FastAPIRequest, call_next):
+    started = time.perf_counter()
+    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    correlation_id = request.headers.get("x-correlation-id") or request_id
+    response = await call_next(request)
+    response.headers["x-request-id"] = request_id
+    response.headers["x-correlation-id"] = correlation_id
+    response.headers["x-latency-ms"] = f"{(time.perf_counter() - started) * 1000:.3f}"
+    return response
 
 
 @app.get("/health/live")
