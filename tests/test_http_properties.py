@@ -21,3 +21,20 @@ def test_property(value: str) -> None:
         },
     )
     assert response.status_code == 200, response.text
+
+
+def test_rejects_empty_cases() -> None:
+    response = client.post(
+        "/v1/evaluate",
+        json={"key": "run-1", "payload": {"cases": []}},
+    )
+    assert response.status_code == 422
+
+
+def test_rejects_oversized_case_batch() -> None:
+    cases = [{"expected": "x", "actual": "x"}] * 10_001
+    response = client.post(
+        "/v1/evaluate",
+        json={"key": "run-1", "payload": {"cases": cases}},
+    )
+    assert response.status_code == 422
