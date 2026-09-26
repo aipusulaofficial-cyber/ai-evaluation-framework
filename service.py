@@ -15,9 +15,18 @@ tracer = trace.get_tracer("ai-evaluation-framework")
 app = FastAPI(title="ai-evaluation-framework", version="1.0.0")
 
 
+class EvaluationCasePayload(BaseModel):
+    expected: str = Field(min_length=1, max_length=10_000)
+    actual: str = Field(min_length=1, max_length=10_000)
+
+
+class EvaluationPayload(BaseModel):
+    cases: list[EvaluationCasePayload] = Field(min_length=1, max_length=10_000)
+
+
 class Request(BaseModel):
-    key: str
-    payload: dict = Field(default_factory=dict)
+    key: str = Field(min_length=1, max_length=128)
+    payload: EvaluationPayload
 
 
 @app.middleware("http")
@@ -47,17 +56,9 @@ def handle(request: Request) -> dict[str, float | int]:
     with tracer.start_as_current_span("evaluation.evaluate") as span:
         span.set_attribute("evaluation.key", request.key)
         try:
-            raw_cases = request.payload.get("cases", [])
-            if not isinstance(raw_cases, list):
-                raise ValueError("cases must be a list")
             cases = [
-                Case(
-                    id=str(index),
-                    expected=str(item.get("expected", "")),
-                    actual=str(item.get("actual", "")),
-                )
-                for index, item in enumerate(raw_cases)
-                if isinstance(item, dict)
+                Case(id=str(index), expected=item.expected, actual=item.actual)
+                for index, item in enumerate(request.payload.cases)
             ]
             scorecard = exact_match(cases)
             logger.info(
