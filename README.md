@@ -1,29 +1,37 @@
 # AI Evaluation Framework
 
-**Principal-level reference implementation** focused on repeatable evaluation protocols, calibration, adjudication, agreement measurement, and audit-ready evidence.
+A repeatable evaluation framework for measuring AI system behavior with versioned protocols, calibration, adjudication, agreement measurement and audit-ready evidence.
 
-## Engineering intent
-- Clear domain boundaries and replaceable infrastructure adapters
-- Explicit contracts, validation, and failure semantics
-- Deterministic tests with external dependencies isolated
-- Operational readiness through health checks, CI, and security validation
-- Architecture decisions documented so trade-offs are reviewable
+## Evaluation lifecycle
+```text
+Dataset + rubric version
+        -> evaluator / judge
+        -> independent scoring
+        -> calibration
+        -> adjudication
+        -> agreement measurement
+        -> evaluation evidence
+```
 
-## System design
-The repository is structured around explicit responsibilities rather than framework-driven coupling. Domain policy, orchestration, infrastructure adapters, and operational concerns remain separable so components can evolve independently.
+The design goal is reproducibility: every result is tied to the dataset, rubric, evaluator configuration and run metadata that produced it.
 
-## Quality bar
-- **Correctness:** contract, edge-case, and failure-path tests
-- **Reliability:** bounded work, explicit failure behavior, and health signals where applicable
-- **Security:** least-privilege boundaries, input validation, and safe defaults
-- **Observability:** correlation/context propagation and actionable operational signals
-- **Delivery:** reproducible CI validation before changes are considered complete
+## Core contracts
+- Dataset and rubric versions are explicit.
+- Judge/model adapters are replaceable.
+- Scoring rules are deterministic where the evaluator permits it.
+- Disagreements can be adjudicated instead of silently collapsed.
+- Agreement is measured separately from the final score.
+- Run metadata provides an audit trail.
 
-## Principal engineering contract
-See [docs/PRINCIPAL-ENGINEERING.md](docs/PRINCIPAL-ENGINEERING.md) for the reviewable engineering contract, NFRs, and change-safety checklist.
+## Reliability
+Malformed datasets, invalid rubrics, evaluator failures and ambiguous outcomes are explicit states. External model dependencies are isolated behind adapters so tests remain deterministic.
 
-## Architecture & decisions
-See [ARCHITECTURE.md](ARCHITECTURE.md) and the ADRs directory for system boundaries, key trade-offs, and extension points.
+## Quality gates
+Contract, edge-case and failure-path tests run in CI alongside security and production validation.
 
-## Engineering principle
-The goal is to make important behavior **explicit, testable, observable, auditable, and replaceable** without adding complexity that does not buy a measurable engineering property.
+## Evidence
+- Engineering contract: [docs/PRINCIPAL-ENGINEERING.md](docs/PRINCIPAL-ENGINEERING.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
+- Decisions: [ADRs](ADRs/)
+
+This is an implementation-oriented evaluation system, not a collection of benchmark prompts.
