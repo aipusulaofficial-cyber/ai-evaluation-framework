@@ -14,11 +14,7 @@ def calibration_bins(
     result = []
     for i in range(bins):
         lo, hi = i / bins, (i + 1) / bins
-        pairs = [
-            (c, o)
-            for c, o in zip(confidences, outcomes)
-            if lo <= c <= hi if i == bins - 1
-        ]
+        pairs = [(c, o) for c, o in zip(confidences, outcomes) if lo <= c <= hi if i == bins - 1]
         if i < bins - 1:
             pairs = [(c, o) for c, o in zip(confidences, outcomes) if lo <= c < hi]
         if pairs:
