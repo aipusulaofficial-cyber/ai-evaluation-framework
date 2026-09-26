@@ -4,9 +4,7 @@ def exact_match(predictions: list[str], references: list[str]) -> float:
     return sum(a.strip() == b.strip() for a, b in zip(predictions, references)) / len(predictions)
 
 
-def calibration_bins(
-    confidences: list[float], outcomes: list[bool], bins: int = 10
-) -> list[dict]:
+def calibration_bins(confidences: list[float], outcomes: list[bool], bins: int = 10) -> list[dict]:
     if len(confidences) != len(outcomes) or not confidences:
         raise ValueError("aligned data required")
     if bins < 1 or any(not 0 <= c <= 1 for c in confidences):
