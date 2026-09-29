@@ -35,3 +35,6 @@ Contract, edge-case and failure-path tests run in CI alongside security and prod
 - Decisions: [ADRs](ADRs/)
 
 This is an implementation-oriented evaluation system, not a collection of benchmark prompts.
+
+## Portfolio evidence
+[Portfolio evidence map](docs/PORTFOLIO_EVIDENCE.md) — executable proof, architecture mapping and reviewable CI evidence.
