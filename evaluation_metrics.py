@@ -16,17 +16,20 @@ def calibration_bins(confidences: list[float], outcomes: list[bool], bins: int =
     for i in range(bins):
         lo, hi = i / bins, (i + 1) / bins
         pairs = [
-            (c, o) for c, o in zip(confidences, outcomes)
+            (c, o)
+            for c, o in zip(confidences, outcomes)
             if (lo <= c <= hi if i == bins - 1 else lo <= c < hi)
         ]
         if pairs:
-            result.append({
-                "lower": lo,
-                "upper": hi,
-                "count": len(pairs),
-                "confidence": sum(c for c, _ in pairs) / len(pairs),
-                "accuracy": sum(o for _, o in pairs) / len(pairs),
-            })
+            result.append(
+                {
+                    "lower": lo,
+                    "upper": hi,
+                    "count": len(pairs),
+                    "confidence": sum(c for c, _ in pairs) / len(pairs),
+                    "accuracy": sum(o for _, o in pairs) / len(pairs),
+                }
+            )
     return result
 
 
