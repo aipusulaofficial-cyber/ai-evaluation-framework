@@ -4,25 +4,34 @@ def exact_match(predictions: list[str], references: list[str]) -> float:
     return sum(a.strip() == b.strip() for a, b in zip(predictions, references)) / len(predictions)
 
 
-def calibration_bins(confidences: list[float], outcomes: list[bool], bins: int = 10) -> list[dict]:
+def calibration_bins(
+    confidences: list[float], outcomes: list[bool], bins: int = 10
+) -> list[dict]:
     if len(confidences) != len(outcomes) or not confidences:
         raise ValueError("aligned data required")
-    if bins < 1 or any(not 0 <= c <= 1 for c in confidences):
-        raise ValueError("confidences must be in [0, 1]")
+    if isinstance(bins, bool) or not isinstance(bins, int) or bins < 1:
+        raise ValueError("bins must be a positive integer")
+    if any(not 0 <= confidence <= 1 for confidence in confidences):
+        raise ValueError("confidences must be finite and in [0, 1]")
+
     result = []
-    for i in range(bins):
-        lo, hi = i / bins, (i + 1) / bins
-        pairs = [(c, o) for c, o in zip(confidences, outcomes) if lo <= c <= hi if i == bins - 1]
-        if i < bins - 1:
-            pairs = [(c, o) for c, o in zip(confidences, outcomes) if lo <= c < hi]
+    for index in range(bins):
+        lower, upper = index / bins, (index + 1) / bins
+        # Include exactly 1.0 in the final bin, never in an adjacent bin.
+        pairs = [
+            (confidence, outcome)
+            for confidence, outcome in zip(confidences, outcomes)
+            if lower <= confidence < upper
+            or (index == bins - 1 and confidence == 1.0)
+        ]
         if pairs:
             result.append(
                 {
-                    "lower": lo,
-                    "upper": hi,
+                    "lower": lower,
+                    "upper": upper,
                     "count": len(pairs),
-                    "confidence": sum(c for c, _ in pairs) / len(pairs),
-                    "accuracy": sum(o for _, o in pairs) / len(pairs),
+                    "confidence": sum(confidence for confidence, _ in pairs) / len(pairs),
+                    "accuracy": sum(outcome for _, outcome in pairs) / len(pairs),
                 }
             )
     return result
