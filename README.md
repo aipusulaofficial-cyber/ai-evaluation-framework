@@ -1,5 +1,10 @@
 # AI Evaluation Framework
 
+[![CI](https://github.com/aipusulaofficial-cyber/ai-evaluation-framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aipusulaofficial-cyber/ai-evaluation-framework/actions/workflows/ci.yml)
+[![Production Tests](https://github.com/aipusulaofficial-cyber/ai-evaluation-framework/actions/workflows/production-tests.yml/badge.svg?branch=main)](https://github.com/aipusulaofficial-cyber/ai-evaluation-framework/actions/workflows/production-tests.yml)
+[![Security / SBOM](https://github.com/aipusulaofficial-cyber/ai-evaluation-framework/actions/workflows/security-sbom.yml/badge.svg?branch=main)](https://github.com/aipusulaofficial-cyber/ai-evaluation-framework/actions/workflows/security-sbom.yml)
+
+
 A repeatable evaluation framework for measuring AI system behavior with versioned protocols, calibration, adjudication, agreement measurement and audit-ready evidence.
 
 ## Evaluation lifecycle
