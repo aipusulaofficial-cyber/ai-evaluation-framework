@@ -92,3 +92,44 @@ def test_circuit_open():
             retryable=lambda e: True,
             breaker=b,
         )
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf"), True])
+def test_rate_limit_rejects_non_finite_or_bool_cost(bad):
+    bucket = TokenBucket(1, 1)
+    with pytest.raises(ValueError):
+        bucket.allow(bad)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"attempts": True},
+        {"base_delay": float("nan")},
+        {"max_delay": float("inf")},
+        {"jitter": -0.1},
+        {"base_delay": 2.0, "max_delay": 1.0},
+    ],
+)
+def test_retry_policy_rejects_invalid_values(kwargs):
+    with pytest.raises(ValueError):
+        RetryPolicy(**kwargs)
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), True, 0, -1])
+def test_timeout_rejects_invalid_values(bad):
+    with pytest.raises(ValueError):
+        call_with_timeout(lambda: "ok", bad)
+
+
+def test_circuit_and_executor_reject_bool_or_non_finite_values():
+    with pytest.raises(ValueError):
+        CircuitBreaker(True, 1)
+    with pytest.raises(ValueError):
+        CircuitBreaker(1, float("nan"))
+    with pytest.raises(ValueError):
+        BoundedExecutor(True)
+    with pytest.raises(ValueError):
+        TokenBucket(float("nan"), 1)
+    with pytest.raises(ValueError):
+        TokenBucket(1, True)
