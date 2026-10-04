@@ -10,7 +10,9 @@ def exact_match(predictions: list[str], references: list[str]) -> float:
 def calibration_bins(confidences: list[float], outcomes: list[bool], bins: int = 10) -> list[dict]:
     if len(confidences) != len(outcomes) or not confidences:
         raise ValueError("aligned data required")
-    if bins < 1 or any(not math.isfinite(c) or not 0 <= c <= 1 for c in confidences):
+    if isinstance(bins, bool) or not isinstance(bins, int) or bins < 1:
+        raise ValueError("bins must be a positive integer")
+    if any(not isinstance(c, (int, float)) or isinstance(c, bool) or not math.isfinite(c) or not 0 <= c <= 1 for c in confidences):
         raise ValueError("confidences must be finite and in [0, 1]")
     result = []
     for i in range(bins):
