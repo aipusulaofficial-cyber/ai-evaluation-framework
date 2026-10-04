@@ -1,3 +1,6 @@
+import math
+
+
 def exact_match(predictions: list[str], references: list[str]) -> float:
     if len(predictions) != len(references) or not predictions:
         raise ValueError("aligned non-empty datasets required")
@@ -7,14 +10,16 @@ def exact_match(predictions: list[str], references: list[str]) -> float:
 def calibration_bins(confidences: list[float], outcomes: list[bool], bins: int = 10) -> list[dict]:
     if len(confidences) != len(outcomes) or not confidences:
         raise ValueError("aligned data required")
-    if bins < 1 or any(not 0 <= c <= 1 for c in confidences):
-        raise ValueError("confidences must be in [0, 1]")
+    if bins < 1 or any(not math.isfinite(c) or not 0 <= c <= 1 for c in confidences):
+        raise ValueError("confidences must be finite and in [0, 1]")
     result = []
     for i in range(bins):
         lo, hi = i / bins, (i + 1) / bins
-        pairs = [(c, o) for c, o in zip(confidences, outcomes) if lo <= c <= hi if i == bins - 1]
-        if i < bins - 1:
-            pairs = [(c, o) for c, o in zip(confidences, outcomes) if lo <= c < hi]
+        pairs = [
+            (c, o)
+            for c, o in zip(confidences, outcomes)
+            if (lo <= c <= hi if i == bins - 1 else lo <= c < hi)
+        ]
         if pairs:
             result.append(
                 {
